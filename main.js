@@ -23,12 +23,12 @@ class Block{
     mineBlock(difficulty){
         while(this.hash.substring(0, difficulty) !== Array(difficulty + 1).join("0")){ //first "difficult" numbers need to be 0
             //be zero
-            this.nonce++;
-            this.hash = this.calculateHash(); 
-        }//not yet change the block content
+            this.nonce++; 
+            this.hash = this.calculateHash(); //after nonce + 1, the has will be calculated again, until get certain number of 0
+        }
         
-        console.log("Block mined:" + this.hash); 
-    }
+        console.log("Block mined: " + this.hash); 
+    }//after running this, the hash will contain 'difficulty' amount of 0 in the beginning (for security and limit the speed)
     
 }//Block class end
 
@@ -36,6 +36,7 @@ class Block{
 class BlockChain{
     constructor(){
         this.chain = [this.createGenesisBlock()]; //chain array(array of blocks), initialize first block
+        this.difficulty = 5
         //which is genesis Block
     }
 
@@ -49,7 +50,7 @@ class BlockChain{
 
     addBlock(newBlock){
         newBlock.previousHash = this.getLatestBlock().hash;
-        newBlock.hash = newBlock.calculateHash();
+        newBlock.mineBlock(this.difficulty);
         this.chain.push(newBlock);
     }
 
@@ -70,15 +71,23 @@ class BlockChain{
     }
 }
 
+
+
 let testCoin = new BlockChain();
+
+console.log('mining block 1...')
 testCoin.addBlock(new Block(1, "10/07/2017", {amount: 4}));
+
+console.log('mining block 2...')
 testCoin.addBlock(new Block(2, "11/07/2017", {amount: 10})); //first asm, create two block
 
+/*
 console.log('BlockChain valid? \n' + testCoin.isChainValid());
+
 
 testCoin.chain[1].data = { amount: 100 };
 testCoin.chain[1].hash = testCoin.chain[1].calculateHash(); //not working, because even recalculate the hash,
 //the nexthash.previoushash still not equal to the current hash after recalculate
-console.log('After changing, still valid? \n' + testCoin.isChainValid());
+console.log('After changing, still valid? \n' + testCoin.isChainValid()); */
 
 console.log(JSON.stringify(testCoin, null, 4));
