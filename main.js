@@ -4,11 +4,20 @@
 
 const SHA256 = require('crypto-js/sha256'); //import libaray in the node_modules\crpto-js/sha256.js
 
+class Transaction{
+    constructor(fromAddress, toAddress, amount){
+        this.fromAddress = fromAddress;
+        this.toAddress = toAddress;
+        this.amount = amount;
+    }
+}
+
+
 class Block{
-    constructor(index, timestamp, data, previousHash = ''){
-        this.index = index;
+    constructor( timestamp, transaction, previousHash = ''){
+        
         this.timestamp = timestamp;
-        this.data = data;
+        this.transaction = transaction;
         this.previousHash = previousHash;
 
         this.hash = this.calculateHash();
@@ -36,22 +45,54 @@ class Block{
 class BlockChain{
     constructor(){
         this.chain = [this.createGenesisBlock()]; //chain array(array of blocks), initialize first block
-        this.difficulty = 5
+        this.difficulty = 2;
+        this.pendingTransaction = [];
+        this.miningReward = 100;
         //which is genesis Block
     }
 
     createGenesisBlock(){
-        return new Block(0, "01/01/2017", "Genesis block", "0");
+        return new Block("01/01/2017", "Genesis block", "0");
     }
 
     getLatestBlock(){
         return this.chain[this.chain.length - 1];
     }
 
-    addBlock(newBlock){
-        newBlock.previousHash = this.getLatestBlock().hash;
-        newBlock.mineBlock(this.difficulty);
-        this.chain.push(newBlock);
+    minePendingTransactions(miningRewardAddress){
+        let block = new Block(Date.now(), this.pendingTransaction); //add new block
+        block.mineBlock(this.difficulty); //mine block
+
+        console.log('Block successfully mined!')
+        this.chain.push(block); //add to blockchain array
+
+        this.pendingTransaction = [
+            new Transaction(null, miningRewardAddress, this.miningReward)
+        ]; //create new transaction, which
+        //no target address(null), to address is the miner (give reward to)
+        //and a mining reward
+
+    }
+
+    createTransaction(transaction){
+        this.pendingTransaction.push(transaction); //add a transaction to array
+    }
+
+    getBalanceOfAddress(address){
+        let balance = 0;
+
+        for(const block of this.chain){ //loop through the blockchain array
+            for(const trans of block.transaction){ //loop through the transaction to see whether address exist on from/to
+                if(trans.fromAddress === address){
+                    balance -= trans.amount;
+                }
+
+                if(trans.toAddress === address){
+                    balance += trans.amount;
+                }
+            }
+        }
+        return balance;
     }
 
     isChainValid(){
@@ -71,23 +112,27 @@ class BlockChain{
     }
 }
 
+//main
 
+let testCoin = new BlockChain()
+testCoin.createTransaction(new Transaction('address1', 'address2', 100))
+testCoin.createTransaction(new Transaction('address2', 'address1', 50))
 
-let testCoin = new BlockChain();
+console.log('\n starting the miner')
+testCoin.minePendingTransactions('Nixon-address') 
+console.log('\nBalance of Nixon is: ', testCoin.getBalanceOfAddress('Nixon-address'))
+//Nixon mine a block
+//Nixon's balance will be 0 because Nixon's transaction is sent to pending transaction
+//so that in the next mine, Nixon's transaction will be count.
 
-console.log('mining block 1...')
-testCoin.addBlock(new Block(1, "10/07/2017", {amount: 4}));
+console.log('\n starting the miner(2)')
+testCoin.minePendingTransactions('Nixon-address')
+console.log('\nBalance of Nixon is: ', testCoin.getBalanceOfAddress('Nixon-address'))
 
-console.log('mining block 2...')
-testCoin.addBlock(new Block(2, "11/07/2017", {amount: 10})); //first asm, create two block
+//crypto trade = someone trade:
+//e.g: A give B 100 and B give A 50
+//now, there is two transactions exists, but these are only transaction
 
-/*
-console.log('BlockChain valid? \n' + testCoin.isChainValid());
-
-
-testCoin.chain[1].data = { amount: 100 };
-testCoin.chain[1].hash = testCoin.chain[1].calculateHash(); //not working, because even recalculate the hash,
-//the nexthash.previoushash still not equal to the current hash after recalculate
-console.log('After changing, still valid? \n' + testCoin.isChainValid()); */
-
-console.log(JSON.stringify(testCoin, null, 4));
+//Therefore, we need someone to create Block for the transactions, namely "miner"
+//if someone successfully create block for a transaction, he/she will get a reward, called "mining-reward"
+//which will create a new pending transaction with no fromAddress and ToAddress is miner.
