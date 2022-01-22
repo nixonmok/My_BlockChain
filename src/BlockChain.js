@@ -20,8 +20,8 @@ class Transaction{
         }
 
         const hashTx = this.calculateHashInTransaction();
-        const sig = signingKey.sign(hashTx, 'base64');
-        this.signature = sig.toDER('hex');
+        const sig = signingKey.sign(hashTx, 'base64'); //sign the transaction with a unique hash
+        this.signature = sig.toDER('hex'); //store into signature value (toDER), which is the signature of this transaction
     }
 
     isValid(){
@@ -95,8 +95,13 @@ class BlockChain{
     }
 
     minePendingTransactions(miningRewardAddress){
-        let block = new Block(Date.now(), this.pendingTransaction); //add new block
-        block.mineBlock(this.difficulty); //mine block
+        const rewardTx = new Transaction(null, miningRewardAddress, this.miningReward);
+        this.pendingTransaction.push(rewardTx);
+        //for new transaction
+
+        let block = new Block(Date.now(), this.pendingTransaction, this.getLatestBlock().hash); //create a new block
+        block.mineBlock(this.difficulty); //mine block with a difficulty
+        //note that now there is two pending transaction, one is the reward, one is the target mining
 
         console.log('Block successfully mined!')
         this.chain.push(block); //add to blockchain array
@@ -120,6 +125,7 @@ class BlockChain{
         }
 
         this.pendingTransaction.push(transaction); //add a transaction to array
+        //pendingTransaction is a array
     }
 
     getBalanceOfAddress(address){

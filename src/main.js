@@ -8,6 +8,7 @@ const ec = new EC('secp256k1'); //algorithm used in Bit Coin wallet
 
 const myKey = ec.keyFromPrivate('7eafbcc463567e9794cad487353c0d03997899d083bfffa632f87c12d101da99')
 const myWalletAddress = myKey.getPublic('hex');
+//generate public key for Nixon
 
 //main
 
@@ -18,7 +19,12 @@ tx1.signTransaction(myKey);
 testCoin.addTransaction(tx1);
 
 
-console.log('\n starting the miner')
+console.log('\n starting the miner') //Nixon is a miner, he wants to mine tx1
 testCoin.minePendingTransactions(myWalletAddress);
+//Nixon successfully mined the block, and created one more transaction (reward to Nixon)
 
 console.log('\nBalance of Nixon is', testCoin.getBalanceOfAddress(myWalletAddress))
+
+testCoin.chain[1].transaction[0].amount = 1
+
+console.log('Is chain valid?', testCoin.isChainValid())
